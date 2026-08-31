@@ -1,0 +1,79 @@
+# =========================
+# Dataset Metadata & Splits
+# DO NOT PUSH TO GITHUB
+# =========================
+
+metadata.csv
+train.csv
+val.csv
+test.csv
+# =========================
+# Python
+# =========================
+
+__pycache__/
+*.py[cod]
+*.pyo
+
+# Virtual environments
+venv/
+.venv/
+env/
+
+# =========================
+# Jupyter
+# =========================
+
+.ipynb_checkpoints/
+
+# =========================
+# OS / Editor
+# =========================
+
+.DS_Store
+.vscode/
+.idea/
+
+# =========================
+# Original Dataset
+# DO NOT PUSH TO GITHUB
+# =========================
+
+dataset/
+*.mat
+*.zip
+
+# =========================
+# Processed Dataset
+# DO NOT PUSH TO GITHUB
+# =========================
+
+processed_dataset/
+
+# =========================
+# Training Archive
+# DO NOT PUSH TO GITHUB
+# =========================
+
+brain_tumor_training_data.tar.gz
+
+# =========================
+# Generated / Temporary
+# =========================
+
+*.log
+*.tmp
+
+# =========================
+# Model Files
+# =========================
+
+*.pt
+*.pth
+
+# =========================
+# Flask uploaded images
+# =========================
+
+static/photos/*
+!static/photos/.gitkeep

@@ -1,0 +1,978 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0">
+
+    <title>BrainTumor AI — Brain Tumor Detection</title>
+
+
+    <style>
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+
+        body {
+
+            font-family:
+                -apple-system,
+                BlinkMacSystemFont,
+                "Segoe UI",
+                Roboto,
+                Arial,
+                sans-serif;
+
+            min-height: 100vh;
+
+            background:
+                radial-gradient(
+                    circle at top left,
+                    rgba(37, 99, 235, 0.12),
+                    transparent 35%
+                ),
+
+                radial-gradient(
+                    circle at bottom right,
+                    rgba(14, 165, 233, 0.10),
+                    transparent 35%
+                ),
+
+                #f6f9fc;
+
+            color: #172033;
+        }
+
+
+        /* =========================
+           NAVBAR
+        ========================= */
+
+        .navbar {
+
+            height: 72px;
+
+            background:
+                rgba(255, 255, 255, 0.94);
+
+            backdrop-filter: blur(14px);
+
+            border-bottom:
+                1px solid #e5eaf0;
+
+            display: flex;
+
+            align-items: center;
+
+            justify-content: space-between;
+
+            padding: 0 7%;
+        }
+
+
+        .brand {
+
+            display: flex;
+
+            align-items: center;
+
+            gap: 12px;
+
+            font-size: 20px;
+
+            font-weight: 800;
+
+            color: #123b72;
+        }
+
+
+        .brand-icon {
+
+            width: 42px;
+            height: 42px;
+
+            border-radius: 12px;
+
+            display: flex;
+
+            align-items: center;
+
+            justify-content: center;
+
+            background: #eaf2ff;
+
+            font-size: 22px;
+        }
+
+
+        .github-link {
+
+            display: flex;
+
+            align-items: center;
+
+            gap: 8px;
+
+            color: #475569;
+
+            text-decoration: none;
+
+            font-size: 13px;
+
+            font-weight: 700;
+
+            padding: 9px 14px;
+
+            border:
+                1px solid #e2e8f0;
+
+            border-radius: 10px;
+
+            background: white;
+
+            transition: 0.2s ease;
+        }
+
+
+        .github-link:hover {
+
+            color: #2563eb;
+
+            border-color: #bfdbfe;
+
+            transform: translateY(-1px);
+        }
+
+
+        /* =========================
+           MAIN
+        ========================= */
+
+        .main {
+
+            width: min(1000px, 92%);
+
+            margin: 55px auto;
+        }
+
+
+        /* =========================
+           HERO
+        ========================= */
+
+        .hero {
+
+            text-align: center;
+
+            margin-bottom: 40px;
+        }
+
+
+        .eyebrow {
+
+            display: inline-block;
+
+            padding: 7px 14px;
+
+            border-radius: 999px;
+
+            background: #eaf2ff;
+
+            color: #2563eb;
+
+            font-size: 12px;
+
+            font-weight: 800;
+
+            letter-spacing: 1px;
+
+            text-transform: uppercase;
+
+            margin-bottom: 16px;
+        }
+
+
+        .hero h1 {
+
+            font-size:
+                clamp(38px, 7vw, 64px);
+
+            line-height: 1.05;
+
+            color: #12213a;
+
+            margin-bottom: 18px;
+
+            letter-spacing: -2px;
+        }
+
+
+        .hero h1 span {
+
+            color: #2563eb;
+        }
+
+
+        .hero p {
+
+            max-width: 720px;
+
+            margin: auto;
+
+            color: #64748b;
+
+            font-size: 17px;
+
+            line-height: 1.75;
+        }
+
+
+        /* =========================
+           HERO CARD
+        ========================= */
+
+        .hero-card {
+
+            background: white;
+
+            border:
+                1px solid #e4eaf1;
+
+            border-radius: 26px;
+
+            padding: 45px;
+
+            box-shadow:
+                0 20px 60px
+                rgba(15, 23, 42, 0.08);
+
+            text-align: center;
+        }
+
+
+        .brain-icon {
+
+            width: 100px;
+            height: 100px;
+
+            margin: 0 auto 25px;
+
+            border-radius: 28px;
+
+            display: flex;
+
+            align-items: center;
+
+            justify-content: center;
+
+            background:
+                linear-gradient(
+                    135deg,
+                    #eaf2ff,
+                    #f0f9ff
+                );
+
+            font-size: 48px;
+
+            box-shadow:
+                0 12px 30px
+                rgba(37, 99, 235, 0.10);
+        }
+
+
+        .hero-card h2 {
+
+            font-size: 28px;
+
+            color: #1e293b;
+
+            margin-bottom: 12px;
+        }
+
+
+        .hero-card-description {
+
+            max-width: 650px;
+
+            margin: auto;
+
+            color: #64748b;
+
+            line-height: 1.7;
+
+            font-size: 14px;
+        }
+
+
+        /* =========================
+           STATS
+        ========================= */
+
+        .stats {
+
+            display: grid;
+
+            grid-template-columns:
+                repeat(3, 1fr);
+
+            gap: 16px;
+
+            margin-top: 32px;
+        }
+
+
+        .stat {
+
+            background: #f8fafc;
+
+            border:
+                1px solid #e8edf3;
+
+            border-radius: 17px;
+
+            padding: 22px;
+
+            text-align: center;
+        }
+
+
+        .stat-icon {
+
+            font-size: 23px;
+
+            margin-bottom: 9px;
+        }
+
+
+        .stat-value {
+
+            font-size: 20px;
+
+            font-weight: 800;
+
+            color: #123b72;
+
+            margin-bottom: 5px;
+        }
+
+
+        .stat-label {
+
+            font-size: 12px;
+
+            color: #94a3b8;
+        }
+
+
+        /* =========================
+           HOW IT WORKS
+        ========================= */
+
+        .section-title {
+
+            text-align: center;
+
+            margin-top: 45px;
+
+            margin-bottom: 22px;
+        }
+
+
+        .section-title h2 {
+
+            font-size: 25px;
+
+            color: #1e293b;
+
+            margin-bottom: 7px;
+        }
+
+
+        .section-title p {
+
+            font-size: 13px;
+
+            color: #94a3b8;
+        }
+
+
+        .steps {
+
+            display: grid;
+
+            grid-template-columns:
+                repeat(3, 1fr);
+
+            gap: 16px;
+        }
+
+
+        .step {
+
+            background: white;
+
+            border:
+                1px solid #e4eaf1;
+
+            border-radius: 18px;
+
+            padding: 25px;
+
+            text-align: center;
+
+            box-shadow:
+                0 8px 25px
+                rgba(15, 23, 42, 0.04);
+        }
+
+
+        .step-number {
+
+            width: 42px;
+            height: 42px;
+
+            margin: 0 auto 15px;
+
+            border-radius: 12px;
+
+            display: flex;
+
+            align-items: center;
+
+            justify-content: center;
+
+            background: #eaf2ff;
+
+            color: #2563eb;
+
+            font-weight: 800;
+
+            font-size: 15px;
+        }
+
+
+        .step h3 {
+
+            font-size: 16px;
+
+            color: #1e293b;
+
+            margin-bottom: 7px;
+        }
+
+
+        .step p {
+
+            font-size: 12px;
+
+            color: #94a3b8;
+
+            line-height: 1.6;
+        }
+
+
+        /* =========================
+           CTA
+        ========================= */
+
+        .cta {
+
+            margin-top: 38px;
+
+            text-align: center;
+        }
+
+
+        .detect-btn {
+
+            display: inline-flex;
+
+            align-items: center;
+
+            justify-content: center;
+
+            gap: 9px;
+
+            padding: 15px 30px;
+
+            border-radius: 13px;
+
+            background: #2563eb;
+
+            color: white;
+
+            text-decoration: none;
+
+            font-size: 15px;
+
+            font-weight: 800;
+
+            box-shadow:
+                0 10px 25px
+                rgba(37, 99, 235, 0.25);
+
+            transition: 0.2s ease;
+        }
+
+
+        .detect-btn:hover {
+
+            transform: translateY(-2px);
+
+            box-shadow:
+                0 14px 30px
+                rgba(37, 99, 235, 0.32);
+        }
+
+
+        /* =========================
+           DISCLAIMER
+        ========================= */
+
+        .disclaimer {
+
+            margin-top: 28px;
+
+            padding: 18px 20px;
+
+            border-radius: 14px;
+
+            background: #fffaf0;
+
+            border:
+                1px solid #f5e6c8;
+
+            color: #7c5a20;
+
+            font-size: 12px;
+
+            line-height: 1.65;
+
+            text-align: center;
+        }
+
+
+        /* =========================
+           FOOTER
+        ========================= */
+
+        footer {
+
+            margin-top: 45px;
+
+            padding: 28px 20px;
+
+            text-align: center;
+
+            border-top:
+                1px solid #e5eaf0;
+
+            color: #94a3b8;
+
+            font-size: 12px;
+        }
+
+
+        .developer {
+
+            margin-bottom: 8px;
+
+            color: #64748b;
+
+            font-size: 13px;
+        }
+
+
+        .developer strong {
+
+            color: #123b72;
+        }
+
+
+        .footer-github {
+
+            color: #2563eb;
+
+            text-decoration: none;
+
+            font-weight: 700;
+        }
+
+
+        .footer-github:hover {
+
+            text-decoration: underline;
+        }
+
+
+        /* =========================
+           RESPONSIVE
+        ========================= */
+
+        @media (max-width: 700px) {
+
+            .navbar {
+
+                padding: 0 5%;
+            }
+
+
+            .github-link {
+
+                font-size: 0;
+            }
+
+
+            .github-link span {
+
+                font-size: 18px;
+            }
+
+
+            .main {
+
+                margin: 35px auto;
+            }
+
+
+            .hero-card {
+
+                padding: 30px 20px;
+            }
+
+
+            .stats,
+            .steps {
+
+                grid-template-columns: 1fr;
+            }
+
+        }
+
+    </style>
+
+</head>
+
+
+<body>
+
+
+    <!-- =========================
+         NAVBAR
+    ========================= -->
+
+    <nav class="navbar">
+
+
+        <div class="brand">
+
+            <div class="brand-icon">
+                🧠
+            </div>
+
+            BrainTumor AI
+
+        </div>
+
+
+        <a
+            href="https://github.com/vickycodeswith"
+            target="_blank"
+            rel="noopener noreferrer"
+            class="github-link">
+
+            <span>⌘</span>
+
+            GitHub · vickycodeswith
+
+        </a>
+
+    </nav>
+
+
+    <!-- =========================
+         MAIN
+    ========================= -->
+
+    <main class="main">
+
+
+        <!-- HERO -->
+
+        <section class="hero">
+
+            <span class="eyebrow">
+                Deep Learning • Computer Vision
+            </span>
+
+
+            <h1>
+                Brain Tumor
+                <span>Detection</span>
+            </h1>
+
+
+            <p>
+
+                An end-to-end deep learning system that
+                analyzes MRI scans and classifies brain
+                tumor types using a fine-tuned ResNet50
+                model.
+
+            </p>
+
+        </section>
+
+
+        <!-- MAIN CARD -->
+
+        <section class="hero-card">
+
+
+            <div class="brain-icon">
+                🧠
+            </div>
+
+
+            <h2>
+                AI-Powered MRI Analysis
+            </h2>
+
+
+            <p class="hero-card-description">
+
+                Upload a brain MRI image and the trained
+                deep learning model will analyze the scan
+                and classify it as Glioma, Meningioma,
+                or Pituitary tumor.
+
+            </p>
+
+
+            <!-- STATS -->
+
+            <div class="stats">
+
+
+                <div class="stat">
+
+                    <div class="stat-icon">
+                        🧠
+                    </div>
+
+                    <div class="stat-value">
+                        ResNet50
+                    </div>
+
+                    <div class="stat-label">
+                        Transfer Learning
+                    </div>
+
+                </div>
+
+
+                <div class="stat">
+
+                    <div class="stat-icon">
+                        🎯
+                    </div>
+
+                    <div class="stat-value">
+                        94.05%
+                    </div>
+
+                    <div class="stat-label">
+                        Test Accuracy
+                    </div>
+
+                </div>
+
+
+                <div class="stat">
+
+                    <div class="stat-icon">
+                        🔬
+                    </div>
+
+                    <div class="stat-value">
+                        3 Classes
+                    </div>
+
+                    <div class="stat-label">
+                        Tumor Classification
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <!-- CTA -->
+
+            <div class="cta">
+
+                <a
+                    href="/uimg"
+                    class="detect-btn">
+
+                    🔍
+
+                    Detect Brain Tumor
+
+                </a>
+
+            </div>
+
+
+        </section>
+
+
+        <!-- =========================
+             HOW IT WORKS
+        ========================= -->
+
+        <section>
+
+            <div class="section-title">
+
+                <h2>
+                    How It Works
+                </h2>
+
+                <p>
+                    Three simple steps from MRI image to prediction
+                </p>
+
+            </div>
+
+
+            <div class="steps">
+
+
+                <div class="step">
+
+                    <div class="step-number">
+                        01
+                    </div>
+
+                    <h3>
+                        Upload MRI
+                    </h3>
+
+                    <p>
+                        Upload a compatible brain MRI
+                        image in JPG, JPEG, PNG or GIF format.
+                    </p>
+
+                </div>
+
+
+                <div class="step">
+
+                    <div class="step-number">
+                        02
+                    </div>
+
+                    <h3>
+                        AI Analysis
+                    </h3>
+
+                    <p>
+                        The fine-tuned ResNet50 model
+                        processes the MRI image.
+                    </p>
+
+                </div>
+
+
+                <div class="step">
+
+                    <div class="step-number">
+                        03
+                    </div>
+
+                    <h3>
+                        Get Prediction
+                    </h3>
+
+                    <p>
+                        Receive the predicted tumor class
+                        along with model confidence.
+                    </p>
+
+                </div>
+
+            </div>
+
+        </section>
+
+
+        <!-- =========================
+             DISCLAIMER
+        ========================= -->
+
+        <div class="disclaimer">
+
+            ⚠️
+
+            <strong>
+                Educational & Research Use Only.
+            </strong>
+
+            This project is intended for educational and
+            research purposes. It is not a medical diagnostic
+            tool and should not be used to make medical
+            decisions. Always consult a qualified medical
+            professional for clinical interpretation.
+
+        </div>
+
+
+    </main>
+
+
+    <!-- =========================
+         FOOTER
+    ========================= -->
+
+    <footer>
+
+        <div class="developer">
+
+            Developed by
+            <strong>Nitesh Yadav</strong>
+
+        </div>
+
+
+        <div>
+
+            BrainTumor AI • ResNet50 Transfer Learning
+
+            ·
+
+            <a
+                href="https://github.com/vickycodeswith"
+                target="_blank"
+                rel="noopener noreferrer"
+                class="footer-github">
+
+                GitHub: vickycodeswith
+
+            </a>
+
+        </div>
+
+    </footer>
+
+
+</body>
+
+</html>
