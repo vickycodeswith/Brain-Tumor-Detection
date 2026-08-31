@@ -6,6 +6,7 @@ import torch.nn as nn
 from PIL import Image
 from flask import Flask, request, render_template
 from torchvision import transforms, models
+from huggingface_hub import hf_hub_download
 
 
 # ============================================================
@@ -31,6 +32,8 @@ app.secret_key = os.environ.get(
 )
 
 app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
+
+# Maximum uploaded image size: 16 MB
 app.config["MAX_CONTENT_LENGTH"] = 16 * 1024 * 1024
 
 os.makedirs(
@@ -124,28 +127,49 @@ model.fc = nn.Sequential(
 
 
 # ============================================================
-# Load Trained Model
+# Hugging Face Model Configuration
 # ============================================================
 
-MODEL_PATH = os.path.join(
-    BASE_DIR,
-    "models",
-    "bt_resnet50_model.pt"
+HF_REPO_ID = "Vicky8021/brain-tumor-resnet50"
+
+MODEL_FILENAME = "bt_resnet50_model.pt"
+
+
+# ============================================================
+# Download / Locate Trained Model
+# ============================================================
+
+print(
+    "Checking trained model on Hugging Face..."
 )
 
+try:
 
-if not os.path.isfile(MODEL_PATH):
+    MODEL_PATH = hf_hub_download(
+        repo_id=HF_REPO_ID,
+        filename=MODEL_FILENAME
+    )
 
-    raise FileNotFoundError(
-        f"Trained model not found: {MODEL_PATH}"
+    print(
+        "Model available at:",
+        MODEL_PATH
+    )
+
+except Exception as error:
+
+    raise RuntimeError(
+        "Unable to download the trained model "
+        f"from Hugging Face: {error}"
     )
 
 
-print(
-    "Loading trained model from:",
-    MODEL_PATH
-)
+# ============================================================
+# Load Trained Model
+# ============================================================
 
+print(
+    "Loading trained model..."
+)
 
 model.load_state_dict(
     torch.load(
@@ -153,7 +177,6 @@ model.load_state_dict(
         map_location="cpu"
     )
 )
-
 
 model = model.to(
     DEVICE
@@ -204,12 +227,16 @@ def get_prediction(image_bytes):
 
     image = Image.open(
         BytesIO(image_bytes)
-    ).convert("RGB")
+    ).convert(
+        "RGB"
+    )
 
 
     image_tensor = transform(
         image
-    ).unsqueeze(0)
+    ).unsqueeze(
+        0
+    )
 
 
     image_tensor = image_tensor.to(
