@@ -9,28 +9,38 @@ from torchvision import transforms, models
 
 
 # ============================================================
-# Flask configuration
+# Flask Configuration
 # ============================================================
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
-UPLOAD_FOLDER = os.path.join(BASE_DIR, "static", "photos")
+UPLOAD_FOLDER = os.path.join(
+    BASE_DIR,
+    "static",
+    "photos"
+)
 
 app = Flask(
     __name__,
     template_folder="templates"
 )
 
-app.secret_key = "brain-tumor-detection"
+app.secret_key = os.environ.get(
+    "FLASK_SECRET_KEY",
+    "brain-tumor-detection"
+)
 
 app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
 app.config["MAX_CONTENT_LENGTH"] = 16 * 1024 * 1024
 
-os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+os.makedirs(
+    UPLOAD_FOLDER,
+    exist_ok=True
+)
 
 
 # ============================================================
-# Allowed files
+# Allowed File Types
 # ============================================================
 
 ALLOWED_EXTENSIONS = {
@@ -50,8 +60,9 @@ def allowed_file(filename):
 
 
 # ============================================================
-# Classes
-# IMPORTANT: Must match training label mapping
+# Tumor Classes
+# IMPORTANT:
+# Must match training label mapping
 # ============================================================
 
 LABELS = [
@@ -65,11 +76,11 @@ LABELS = [
 # Device
 # ============================================================
 
-if torch.backends.mps.is_available():
-    DEVICE = torch.device("mps")
-
-elif torch.cuda.is_available():
+if torch.cuda.is_available():
     DEVICE = torch.device("cuda")
+
+elif torch.backends.mps.is_available():
+    DEVICE = torch.device("mps")
 
 else:
     DEVICE = torch.device("cpu")
@@ -79,8 +90,9 @@ print("Using device:", DEVICE)
 
 
 # ============================================================
-# Model
-# Exact architecture used during training
+# ResNet50 Model
+#
+# Architecture used during training:
 #
 # ResNet50
 # 2048 → 512 → 3
@@ -88,18 +100,31 @@ print("Using device:", DEVICE)
 
 print("Loading ResNet50...")
 
-model = models.resnet50(weights=None)
+model = models.resnet50(
+    weights=None
+)
 
 model.fc = nn.Sequential(
-    nn.Linear(2048, 512),
+    nn.Linear(
+        2048,
+        512
+    ),
+
     nn.ReLU(),
-    nn.Dropout(0.5),
-    nn.Linear(512, 3)
+
+    nn.Dropout(
+        0.5
+    ),
+
+    nn.Linear(
+        512,
+        3
+    )
 )
 
 
 # ============================================================
-# Load trained weights
+# Load Trained Model
 # ============================================================
 
 MODEL_PATH = os.path.join(
@@ -108,10 +133,18 @@ MODEL_PATH = os.path.join(
     "bt_resnet50_model.pt"
 )
 
-if not os.path.exists(MODEL_PATH):
+
+if not os.path.isfile(MODEL_PATH):
+
     raise FileNotFoundError(
-        f"Model not found: {MODEL_PATH}"
+        f"Trained model not found: {MODEL_PATH}"
     )
+
+
+print(
+    "Loading trained model from:",
+    MODEL_PATH
+)
 
 
 model.load_state_dict(
@@ -121,15 +154,21 @@ model.load_state_dict(
     )
 )
 
-model = model.to(DEVICE)
+
+model = model.to(
+    DEVICE
+)
+
 model.eval()
 
-print("Model loaded successfully.")
+print(
+    "Model loaded successfully."
+)
 
 
 # ============================================================
-# Image preprocessing
-# Must match evaluation preprocessing
+# Image Preprocessing
+# Must match model evaluation preprocessing
 # ============================================================
 
 transform = transforms.Compose([
@@ -141,6 +180,7 @@ transform = transforms.Compose([
     transforms.ToTensor(),
 
     transforms.Normalize(
+
         mean=[
             0.485,
             0.456,
@@ -157,7 +197,7 @@ transform = transforms.Compose([
 
 
 # ============================================================
-# Prediction
+# Prediction Function
 # ============================================================
 
 def get_prediction(image_bytes):
@@ -166,13 +206,16 @@ def get_prediction(image_bytes):
         BytesIO(image_bytes)
     ).convert("RGB")
 
+
     image_tensor = transform(
         image
     ).unsqueeze(0)
 
+
     image_tensor = image_tensor.to(
         DEVICE
     )
+
 
     with torch.no_grad():
 
@@ -180,23 +223,30 @@ def get_prediction(image_bytes):
             image_tensor
         )
 
+
         probabilities = torch.softmax(
             outputs,
             dim=1
         )
+
 
         confidence, predicted = torch.max(
             probabilities,
             dim=1
         )
 
+
     class_id = predicted.item()
 
-    class_name = LABELS[class_id]
+    class_name = LABELS[
+        class_id
+    ]
+
 
     confidence_percent = (
         confidence.item() * 100
     )
+
 
     return (
         class_id,
@@ -206,10 +256,13 @@ def get_prediction(image_bytes):
 
 
 # ============================================================
-# Home
+# Home Page
 # ============================================================
 
-@app.route("/", methods=["GET"])
+@app.route(
+    "/",
+    methods=["GET"]
+)
 def main():
 
     return render_template(
@@ -233,19 +286,37 @@ def uimg():
             "uimg.html"
         )
 
+
+    # --------------------------------------------------------
+    # Check if file exists
+    # --------------------------------------------------------
+
     if "file" not in request.files:
 
         return render_template(
             "error.html"
-        )
+        ), 400
 
-    file = request.files["file"]
+
+    file = request.files[
+        "file"
+    ]
+
+
+    # --------------------------------------------------------
+    # Check filename
+    # --------------------------------------------------------
 
     if file.filename == "":
 
         return render_template(
             "error.html"
-        )
+        ), 400
+
+
+    # --------------------------------------------------------
+    # Check file extension
+    # --------------------------------------------------------
 
     if not allowed_file(
         file.filename
@@ -253,24 +324,51 @@ def uimg():
 
         return render_template(
             "error.html"
-        )
+        ), 400
+
+
+    # --------------------------------------------------------
+    # Read image
+    # --------------------------------------------------------
 
     img_bytes = file.read()
 
-    try:
 
-        class_id, class_name, confidence = (
-            get_prediction(
-                img_bytes
-            )
-        )
+    if not img_bytes:
 
         return render_template(
+            "error.html"
+        ), 400
+
+
+    # --------------------------------------------------------
+    # Run prediction
+    # --------------------------------------------------------
+
+    try:
+
+        (
+            class_id,
+            class_name,
+            confidence
+        ) = get_prediction(
+            img_bytes
+        )
+
+
+        return render_template(
+
             "pred.html",
+
             result=class_name,
-            confidence=f"{confidence:.2f}%",
+
+            confidence=(
+                f"{confidence:.2f}%"
+            ),
+
             file=file
         )
+
 
     except Exception as error:
 
@@ -279,13 +377,26 @@ def uimg():
             error
         )
 
+
         return render_template(
             "error.html"
         ), 500
 
 
 # ============================================================
-# Error handler
+# File Too Large
+# ============================================================
+
+@app.errorhandler(413)
+def request_entity_too_large(error):
+
+    return render_template(
+        "error.html"
+    ), 413
+
+
+# ============================================================
+# Server Error
 # ============================================================
 
 @app.errorhandler(500)
@@ -297,11 +408,24 @@ def server_error(error):
 
 
 # ============================================================
-# Run Flask
+# Application Entry Point
 # ============================================================
 
 if __name__ == "__main__":
 
+    port = int(
+        os.environ.get(
+            "PORT",
+            5000
+        )
+    )
+
+
     app.run(
-        debug=True
+
+        host="0.0.0.0",
+
+        port=port,
+
+        debug=False
     )
