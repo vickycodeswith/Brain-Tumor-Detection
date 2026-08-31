@@ -1,365 +1,723 @@
-<div align="center">
+# 🧠 Brain Tumor Detection using Deep Learning
 
-# 🧠 Brain Tumor Detection — End to End
+An end-to-end **Brain Tumor Classification System** built using **Deep Learning, Transfer Learning, PyTorch, ResNet50, and Flask**.
 
-[![Python](https://img.shields.io/badge/Python-3.7+-3776AB?style=for-the-badge&logo=python&logoColor=white)](https://www.python.org/)
-[![PyTorch](https://img.shields.io/badge/PyTorch-EE4C2C?style=for-the-badge&logo=pytorch&logoColor=white)](https://pytorch.org/)
-[![Flask](https://img.shields.io/badge/Flask-Web%20App-000000?style=for-the-badge&logo=flask&logoColor=white)](https://flask.palletsprojects.com/)
-[![ResNet50](https://img.shields.io/badge/ResNet50-Transfer%20Learning-blueviolet?style=for-the-badge)](https://pytorch.org/vision/stable/models/resnet.html)
-[![Accuracy](https://img.shields.io/badge/Accuracy-99.3%25-brightgreen?style=for-the-badge)](https://github.com/shsarv/Machine-Learning-Projects/tree/main/BRAIN%20TUMOR%20DETECTION%20%5BEND%202%20END%5D)
-[![License](https://img.shields.io/badge/License-MIT-1abc9c?style=for-the-badge)](../LICENSE.md)
+The application analyzes brain MRI images and classifies them into three tumor categories:
 
-> A full **end-to-end deep learning web application** that classifies brain tumors in MRI scans into three tumor types using a **fine-tuned ResNet50** via Transfer Learning — achieving **99.3% accuracy** — deployed as a live Flask web app.
+- 🔬 **Glioma**
+- 🔬 **Meningioma**
+- 🔬 **Pituitary Tumor**
 
-[🔙 Back to Main Repository](https://github.com/shsarv/Machine-Learning-Projects)
-
-</div>
+The trained model achieved **94.05% accuracy on the held-out test dataset**.
 
 ---
 
-## ⚠️ Medical Disclaimer
+## 🚀 Project Overview
 
-> **This tool is for educational and research purposes only.** It is not a substitute for professional medical diagnosis. Always consult a qualified radiologist or medical professional for clinical decisions.
+Brain tumor classification from MRI scans is an important Computer Vision and Deep Learning problem.
 
----
+This project implements a complete machine learning pipeline from raw `.mat` dataset files to a working Flask web application.
 
-## 📌 Table of Contents
+### End-to-End Pipeline
 
-- [About the Project](#-about-the-project)
-- [How It Works](#-how-it-works)
-- [Dataset](#-dataset)
-- [Model Architecture](#-model-architecture)
-- [Model Performance](#-model-performance)
-- [Project Structure](#-project-structure)
-- [Getting Started](#-getting-started)
-- [App Preview](#-app-preview)
-- [Tech Stack](#-tech-stack)
-- [References & Citation](#-references--citation)
-
----
-
-## 🔬 About the Project
-
-Brain tumors are among the most critical conditions in medicine — accurate classification directly guides treatment decisions (surgery, radiation, chemotherapy). This project demonstrates how **Transfer Learning** with a pre-trained **ResNet50** can achieve near-perfect classification accuracy on MRI scans, far outperforming a CNN trained from scratch.
-
-The model is trained on the **Jun Cheng Figshare brain tumor dataset** (3,064 T1-weighted CE-MRI images from 233 patients) and deployed as a **Flask web application** where users can upload an MRI image and receive a real-time classification with confidence score.
-
-**What this project covers:**
-- Converting `.mat` (MATLAB) MRI files to images and extracting tumor masks/borders
-- Data augmentation with custom real-time transformations
-- Fine-tuning ResNet50 with Transfer Learning using PyTorch
-- Model evaluation with accuracy, loss curves, and per-class metrics
-- Serving predictions via a Flask web app
-
----
-
-## ⚙️ How It Works
-
-```
-User Uploads MRI Scan (.jpg / .png)
-              │
-              ▼
-    Image Preprocessing
-  (Resize 224×224 → Normalize → Tensor)
-              │
-              ▼
-   Fine-tuned ResNet50 Forward Pass
-  (ImageNet weights → custom classifier head)
-              │
-              ▼
-    3-Class Softmax Output
-  ┌───────────┬─────────────┬────────────┐
-  │  Glioma   │ Meningioma  │ Pituitary  │
-  └───────────┴─────────────┴────────────┘
-              │
-              ▼
-  Predicted Class + Confidence Score
-       Displayed in Browser
+```text
+Brain MRI Dataset
+        ↓
+MATLAB (.mat) Data Extraction
+        ↓
+Image Preprocessing
+        ↓
+Patient-Level Dataset Splitting
+        ↓
+ResNet50 Transfer Learning
+        ↓
+Model Fine-Tuning
+        ↓
+Model Evaluation
+        ↓
+Trained Model
+        ↓
+Flask Web Application
+        ↓
+MRI Image Upload
+        ↓
+Tumor Prediction
 ```
 
----
-
-## 📊 Dataset
-
-| Property | Details |
-|----------|---------|
-| **Name** | Brain Tumor Dataset |
-| **Author** | Jun Cheng |
-| **Source** | [Figshare — DOI: 10.6084/m9.figshare.1512427](https://figshare.com/articles/dataset/brain_tumor_dataset/1512427) |
-| **Total Images** | 3,064 T1-weighted CE-MRI scans |
-| **Patients** | 233 |
-| **Format** | `.mat` (MATLAB) → converted to `.jpg` |
-| **Task** | Multi-class classification (3 tumor types) |
-
-### Class Distribution
-
-| Class | Description | Slices |
-|-------|-------------|:------:|
-| 🔴 **Glioma** | Arises from glial cells; most common & aggressive brain tumor | 1,426 |
-| 🟡 **Meningioma** | Grows on membranes surrounding the brain; often benign | 708 |
-| 🟢 **Pituitary** | Forms on the pituitary gland at the brain's base; usually slow-growing | 930 |
-| **Total** | | **3,064** |
-
-### `.mat` File Structure
-
-Each `.mat` file contains the following fields:
-
-| Field | Description |
-|-------|-------------|
-| `cjdata.image` | The MRI scan image matrix |
-| `cjdata.label` | Tumor type label (1=Meningioma, 2=Glioma, 3=Pituitary) |
-| `cjdata.tumorBorder` | Coordinates of discrete points on the tumor border `[x1,y1,x2,y2,...]` |
-| `cjdata.tumorMask` | Binary image with `1s` marking the tumor region |
-
-### Data Augmentation
-
-Custom real-time augmentations applied during training:
-
-| Technique | Purpose |
-|-----------|---------|
-| Horizontal & Vertical Flip | Positional variance |
-| Random Rotation (±15°) | Scan orientation variance |
-| Brightness / Contrast Jitter | Scanner setting variance |
-| Random Crop / Zoom | Variable tumor scale |
-| Normalization (ImageNet μ/σ) | Stable gradient flow |
+The project is designed primarily for **educational and research purposes**.
 
 ---
 
-## 🏗️ Model Architecture
+# ✨ Features
 
-Rather than training a CNN from scratch, this project applies **Transfer Learning** by fine-tuning a **ResNet50** pretrained on ImageNet.
+- 🧠 Brain MRI image classification
+- 🔬 3-class tumor classification
+- ⚡ ResNet50 transfer learning
+- 🎯 **94.05% test accuracy**
+- 🏆 **95.84% best validation accuracy**
+- 📊 Precision, Recall and F1-score evaluation
+- 🔀 Confusion matrix evaluation
+- 👨‍💻 Flask-based web application
+- 📤 MRI image upload
+- 🤖 AI-powered tumor prediction
+- 📱 Responsive web interface
+- 🔒 Patient-level dataset splitting
+- 🛡️ Large training data excluded from GitHub
+- 💻 GPU training using Google Colab Tesla T4
 
-```
-Input MRI Image (224 × 224 × 3)
-          │
-          ▼
-┌──────────────────────────────────────┐
-│        ResNet50 Backbone             │
-│   (Pretrained on ImageNet)           │
-│                                      │
-│  Conv1 → BN → ReLU → MaxPool        │
-│  Layer1: 3× Bottleneck blocks        │
-│  Layer2: 4× Bottleneck blocks        │
-│  Layer3: 6× Bottleneck blocks        │
-│  Layer4: 3× Bottleneck blocks        │
-│  Adaptive AvgPool → 2048-dim vector  │
-└──────────────────────────────────────┘
-          │
-          ▼
-┌──────────────────────────────────────┐
-│     Custom Classifier Head           │
-│  FC (2048 → 512) + ReLU             │
-│  Dropout (0.5)                       │
-│  FC (512 → 3)                        │
-│  Softmax                             │
-└──────────────────────────────────────┘
-          │
-          ▼
-  Glioma / Meningioma / Pituitary
+---
+
+# 🧠 Tumor Classes
+
+The model performs classification between three tumor categories:
+
+| Class | Description |
+|---|---|
+| **Glioma** | Brain tumor originating from glial cells |
+| **Meningioma** | Tumor arising from the meninges |
+| **Pituitary** | Tumor involving the pituitary gland |
+
+---
+
+# 🗂️ Dataset
+
+The project uses a brain tumor MRI dataset originally stored in MATLAB `.mat` format.
+
+## Dataset Statistics
+
+```text
+Total MRI Images:       3,064
+Unique Patients:          233
+
+Training Images:        2,153
+Validation Images:        457
+Test Images:              454
+
+Training Patients:        163
+Validation Patients:       35
+Test Patients:             35
 ```
 
-**Training configuration:**
+## Class Distribution
 
-| Parameter | Value |
-|-----------|-------|
-| Base Model | ResNet50 (ImageNet pretrained) |
-| Strategy | Fine-tune full network after warm-up |
-| Optimizer | Adam |
-| Learning Rate | 0.001 (backbone), 0.01 (head) |
-| LR Scheduler | StepLR (decay every 7 epochs) |
-| Loss Function | Cross-Entropy Loss |
-| Epochs | 25 |
-| Batch Size | 32 |
-| Train / Val / Test Split | 70% / 15% / 15% |
+### Training Set
 
----
-
-## 📈 Model Performance
-
-| Metric | Score |
-|--------|:-----:|
-| **Overall Accuracy** | **~99.3%** |
-| **Glioma F1** | ~99% |
-| **Meningioma F1** | ~98% |
-| **Pituitary F1** | ~99% |
-
-> **Why Transfer Learning?** ResNet50 pre-trained on ImageNet already understands low-level features (edges, textures, shapes) that transfer well to MRI images. Fine-tuning requires far less data and training time while achieving significantly higher accuracy than training from scratch.
-
-> Meningioma shows slightly lower scores due to class imbalance (708 vs 1,426 glioma images) and its high visual similarity to surrounding tissue.
-
----
-
-## 📁 Project Structure
-
+```text
+Glioma        980
+Pituitary     659
+Meningioma    514
 ```
-BRAIN TUMOR DETECTION [END 2 END]/
-│
-├── 📂 Dataset/
-│   ├── 📂 bt_images/                        # Converted MRI images (.jpg)
-│   ├── 📂 bt_mask/                          # Tumor mask images
-│   └── 📂 new_dataset/                      # Processed dataset with labels
-│
-├── 📂 Model/
-│   └── brain_tumor_model.pt                 # Saved ResNet50 fine-tuned weights
-│
-├── 📂 notebooks/
-│   ├── brain_tumor_dataset_preparation.ipynb  # .mat → .jpg conversion & preprocessing
-│   └── torch_brain_tumor_classifier.ipynb     # Training, evaluation & results
-│
-├── 📂 static/
-│   ├── 📂 css/style.css                     # App styling
-│   └── 📂 uploads/                          # Temporarily stores uploaded MRI scans
-│
-├── 📂 templates/
-│   ├── index.html                           # Upload page
-│   └── result.html                          # Prediction result page
-│
-├── app.py                                   # Flask application entry point
-├── test.py                                  # CLI script: classify a single image by path
-├── requirements.txt                         # Python dependencies
-└── README.md                                # You are here
+
+### Validation Set
+
+```text
+Glioma        236
+Meningioma    111
+Pituitary     110
+```
+
+### Test Set
+
+```text
+Glioma        210
+Pituitary     161
+Meningioma     83
 ```
 
 ---
 
-## 🚀 Getting Started
+# 🔐 Patient-Level Dataset Splitting
 
-### 1. Clone the repository
+A major part of this project is preventing **patient-level data leakage**.
+
+Instead of randomly splitting individual MRI images, the dataset was split using **patient IDs**.
+
+This ensures that images belonging to the same patient are not distributed across training, validation, and test sets.
+
+## Patient Split
+
+```text
+Train Patients:       163
+Validation Patients:   35
+Test Patients:         35
+```
+
+## Patient Overlap
+
+```text
+Train ∩ Validation = 0
+Train ∩ Test       = 0
+Validation ∩ Test  = 0
+```
+
+This provides a more reliable evaluation of how the model performs on unseen patients.
+
+---
+
+# ⚙️ Data Preprocessing
+
+The original dataset contains MRI images stored inside MATLAB `.mat` files.
+
+The preprocessing pipeline performs the following steps:
+
+1. Reads `.mat` files using `h5py`
+2. Extracts MRI image data
+3. Extracts tumor labels
+4. Maps numeric labels to tumor classes
+5. Normalizes pixel values
+6. Converts images into JPEG format
+7. Organizes images by tumor class
+8. Creates dataset metadata
+9. Performs patient-level train/validation/test splitting
+
+The processed dataset follows this structure:
+
+```text
+processed_dataset/
+│
+├── Glioma/
+├── Meningioma/
+└── Pituitary/
+```
+
+The complete processed dataset is **not included in this GitHub repository** because of its size.
+
+---
+
+# 🧠 Deep Learning Model
+
+## ResNet50 Transfer Learning
+
+The project uses **ResNet50**, a deep Convolutional Neural Network architecture.
+
+Instead of training the model completely from scratch, **Transfer Learning** is used.
+
+A pre-trained ResNet50 model is adapted and fine-tuned for brain MRI tumor classification.
+
+```text
+Pre-trained ResNet50
+        ↓
+Transfer Learning
+        ↓
+Brain MRI Dataset
+        ↓
+Fine-Tuning
+        ↓
+3-Class Classification
+```
+
+### Why Transfer Learning?
+
+Transfer learning allows the model to start with previously learned visual features and adapt them to the brain MRI classification task.
+
+This can provide:
+
+- Faster training
+- Better feature extraction
+- Improved performance
+- Reduced requirement for training from scratch
+
+---
+
+# ⚙️ Training Configuration
+
+```text
+Model:               ResNet50
+Framework:           PyTorch
+GPU:                 Tesla T4
+Batch Size:          32
+Epochs:              25
+Warm-up Epochs:       2
+Number of Classes:   3
+```
+
+Training was performed using **Google Colab with a Tesla T4 GPU**.
+
+---
+
+# 📊 Model Performance
+
+## 🎯 Final Test Accuracy
+
+```text
+94.05%
+```
+
+## 🏆 Best Validation Accuracy
+
+```text
+95.84%
+```
+
+The model was evaluated on a completely held-out test set containing **454 MRI images from 35 patients**.
+
+---
+
+# 📋 Classification Report
+
+| Class | Precision | Recall | F1-Score | Support |
+|---|---:|---:|---:|---:|
+| Meningioma | 90.14% | 77.11% | 83.12% | 83 |
+| Glioma | 91.40% | 96.19% | 93.74% | 210 |
+| Pituitary | 99.38% | 100.00% | 99.69% | 161 |
+| **Accuracy** | | | **94.05%** | **454** |
+| Macro Avg | 93.64% | 91.10% | 92.18% | 454 |
+| Weighted Avg | 94.00% | 94.05% | 93.91% | 454 |
+
+---
+
+# 🔀 Confusion Matrix
+
+```text
+                 Predicted
+              Men   Gli   Pit
+
+Actual Men     64    19     0
+Actual Gli      7   202     1
+Actual Pit      0     0   161
+```
+
+The model achieved particularly strong performance on the **Pituitary** class.
+
+The largest classification confusion occurred between **Meningioma and Glioma**.
+
+---
+
+# 📈 Training Progress
+
+Selected validation accuracy results during training:
+
+```text
+Epoch 01  → 68.71%
+Epoch 02  → 85.34%
+Epoch 04  → 93.22%
+Epoch 10  → 94.97%
+Epoch 12  → 95.40%
+Epoch 20  → 95.84%
+```
+
+### Best Validation Accuracy
+
+```text
+95.84%
+```
+
+### Final Test Accuracy
+
+```text
+94.05%
+```
+
+---
+
+# 🌐 Flask Web Application
+
+The trained model is integrated into a **Flask web application**.
+
+The application allows a user to upload a brain MRI image and receive a predicted tumor class.
+
+## Application Workflow
+
+```text
+User
+ ↓
+Upload MRI Image
+ ↓
+Flask Backend
+ ↓
+Image Preprocessing
+ ↓
+ResNet50 Model
+ ↓
+Prediction
+ ↓
+Tumor Class
+ ↓
+Confidence
+```
+
+---
+
+# 🖥️ Application Pages
+
+The Flask application contains:
+
+### 🏠 Home Page
+
+Provides:
+
+- Project introduction
+- Model information
+- Accuracy information
+- Detection button
+- Developer information
+- GitHub profile
+
+### 📤 Upload Page
+
+Allows the user to upload an MRI image.
+
+### 🔍 Prediction Page
+
+Displays:
+
+- Predicted tumor class
+- Model confidence
+- Uploaded MRI image
+
+### ⚠️ Error Page
+
+Handles application errors gracefully.
+
+---
+
+# 📁 Project Structure
+
+```text
+Brain-Tumor-Detection/
+│
+├── Brain-Tumor-Test-Images/
+│   ├── 1.jpg
+│   ├── 2.jpg
+│   ├── 3.jpg
+│   └── ...
+│
+├── models/
+│   └── README.md
+│
+├── src/
+│   ├── preprocess.py
+│   ├── split_dataset.py
+│   └── train.py
+│
+├── static/
+│   └── b.jpg
+│
+├── templates/
+│   ├── Diseasedet.html
+│   ├── MainPage.html
+│   ├── error.html
+│   ├── pred.html
+│   └── uimg.html
+│
+├── app.py
+├── README.md
+├── requirements.txt
+└── .gitignore
+```
+
+---
+
+# 🛠️ Technologies Used
+
+| Technology | Purpose |
+|---|---|
+| **Python** | Programming language |
+| **PyTorch** | Deep learning framework |
+| **Torchvision** | Computer vision models and transforms |
+| **ResNet50** | Deep learning architecture |
+| **Flask** | Web application backend |
+| **HTML/CSS** | Frontend |
+| **Pillow** | Image processing |
+| **NumPy** | Numerical computation |
+| **Pandas** | Dataset management |
+| **h5py** | MATLAB `.mat` file processing |
+| **scikit-learn** | Dataset splitting and evaluation |
+
+---
+
+# 💻 Installation
+
+## 1. Clone the Repository
 
 ```bash
-git clone https://github.com/shsarv/Machine-Learning-Projects.git
-cd "Machine-Learning-Projects/BRAIN TUMOR DETECTION [END 2 END]"
+git clone https://github.com/vickycodeswith/Brain-Tumor-Detection.git
 ```
 
-### 2. Set up environment
+Move into the project directory:
+
+```bash
+cd Brain-Tumor-Detection
+```
+
+---
+
+## 2. Create a Virtual Environment
+
+### macOS / Linux
+
+```bash
+python3 -m venv venv
+```
+
+Activate it:
+
+```bash
+source venv/bin/activate
+```
+
+### Windows
 
 ```bash
 python -m venv venv
-source venv/bin/activate        # Linux / macOS
-venv\Scripts\activate           # Windows
+```
 
+Activate it:
+
+```bash
+venv\Scripts\activate
+```
+
+---
+
+## 3. Install Dependencies
+
+```bash
 pip install -r requirements.txt
 ```
 
-### 3. Download & prepare the dataset
+---
 
-The raw dataset is in `.mat` (MATLAB) format, split across 4 zip files on Figshare:
+# ▶️ Running the Flask Application
 
-```bash
-# Download all 4 parts from Figshare
-# https://figshare.com/articles/dataset/brain_tumor_dataset/1512427
+Make sure the trained model is available at:
 
-# After downloading, extract each zip:
-unzip brainTumorDataPublic_1-766.zip    -d dataset/bt_set1
-unzip brainTumorDataPublic_767-1532.zip -d dataset/bt_set2
-unzip brainTumorDataPublic_1533-2298.zip -d dataset/bt_set3
-unzip brainTumorDataPublic_2299-3064.zip -d dataset/bt_set4
+```text
+models/bt_resnet50_model.pt
 ```
 
-Then run the **dataset preparation notebook** to convert `.mat` → `.jpg` and generate labels:
-
-```bash
-jupyter notebook notebooks/brain_tumor_dataset_preparation.ipynb
-```
-
-### 4. Train the model (optional — pretrained weights included)
-
-```bash
-jupyter notebook notebooks/torch_brain_tumor_classifier.ipynb
-```
-
-### 5. Run the Flask app
+Then run:
 
 ```bash
 python app.py
 ```
 
-Navigate to → **http://127.0.0.1:5000** and upload an MRI scan.
+The Flask application will start at:
 
-### 6. Quick CLI prediction
+```text
+http://127.0.0.1:5000
+```
+
+Open the address in your browser.
+
+---
+
+# 🧪 Running the Training Pipeline
+
+If the original dataset is available locally, the complete training pipeline can be executed.
+
+## Step 1 — Preprocess Dataset
 
 ```bash
-python test.py --image path/to/mri_scan.jpg
+python src/preprocess.py
+```
+
+This converts the original `.mat` files into processed MRI images.
+
+---
+
+## Step 2 — Create Patient-Level Splits
+
+```bash
+python src/split_dataset.py
+```
+
+This creates:
+
+```text
+train.csv
+val.csv
+test.csv
+```
+
+with patient-level separation.
+
+---
+
+## Step 3 — Train the Model
+
+```bash
+python src/train.py
+```
+
+The training process uses ResNet50 transfer learning.
+
+---
+
+# 📦 Large Files and GitHub
+
+The following files are intentionally excluded from this repository:
+
+```text
+dataset/
+processed_dataset/
+brain_tumor_training_data.tar.gz
+metadata.csv
+train.csv
+val.csv
+test.csv
+models/bt_resnet50_model.pt
+```
+
+These files are excluded using `.gitignore`.
+
+### Why?
+
+The purpose is to keep the GitHub repository lightweight and focused on:
+
+- Source code
+- Model training pipeline
+- Flask application
+- Frontend
+- Documentation
+
+The complete training dataset and trained model are therefore maintained separately.
+
+---
+
+# 🔒 Data Privacy & Repository Design
+
+The repository does not contain the complete training dataset.
+
+Large generated and training files are excluded to:
+
+- Keep repository size small
+- Avoid unnecessary large-file storage
+- Prevent accidental dataset uploads
+- Separate training artifacts from source code
+- Make the project easier to clone and review
+
+---
+
+# 🔬 Machine Learning Workflow
+
+The overall machine learning workflow is:
+
+```text
+1. Dataset Collection
+        ↓
+2. .mat File Processing
+        ↓
+3. Image Normalization
+        ↓
+4. Patient Identification
+        ↓
+5. Patient-Level Dataset Split
+        ↓
+6. Training / Validation / Test
+        ↓
+7. ResNet50 Transfer Learning
+        ↓
+8. Model Fine-Tuning
+        ↓
+9. Validation
+        ↓
+10. Test Evaluation
+        ↓
+11. Flask Deployment
 ```
 
 ---
 
-## 🖥️ App Preview
+# 🎯 Key Results
 
-```
-┌──────────────────────────────────────────────────┐
-│           🧠 Brain Tumor Classifier               │
-│                                                  │
-│   Upload a T1-weighted CE-MRI scan:              │
-│   ┌────────────────────────────────────┐         │
-│   │  [ Choose File ]   mri_scan.jpg    │         │
-│   └────────────────────────────────────┘         │
-│                                                  │
-│              [ Analyze Scan ]                    │
-│                                                  │
-│  ──────────────────────────────────────────────  │
-│                                                  │
-│   Result:  🔴  GLIOMA                            │
-│   Confidence:  98.7%                             │
-│                                                  │
-│   ⚠️  Please consult a medical professional.     │
-└──────────────────────────────────────────────────┘
+```text
+Dataset Images:          3,064
+Unique Patients:           233
+
+Train Images:            2,153
+Validation Images:         457
+Test Images:               454
+
+Best Validation Accuracy: 95.84%
+Test Accuracy:            94.05%
+
+Model:                    ResNet50
+Framework:                PyTorch
+Training GPU:             Tesla T4
 ```
 
 ---
 
-## 🛠️ Tech Stack
+# 🧠 What This Project Demonstrates
 
-| Layer | Technology |
-|-------|-----------|
-| Language | Python 3.7+ |
-| Deep Learning | PyTorch, Torchvision |
-| Model | ResNet50 (Transfer Learning) |
-| Image Processing | OpenCV, PIL (Pillow) |
-| Data / EDA | Pandas, NumPy, Matplotlib, Seaborn, h5py |
-| Web Framework | Flask |
-| Frontend | HTML5, CSS3, Bootstrap |
-| Model Serialization | `torch.save` / `.pt` |
-| Notebook | Jupyter / Google Colab |
+This project demonstrates practical experience with:
 
----
-
-## 📚 References & Citation
-
-**Dataset — please cite if you use this work:**
-
-```bibtex
-@article{Cheng2015,
-  author  = {Cheng, Jun and others},
-  title   = {Enhanced Performance of Brain Tumor Classification via Tumor Region Augmentation and Partition},
-  journal = {PLoS ONE},
-  volume  = {10},
-  number  = {10},
-  year    = {2015}
-}
-
-@article{Cheng2016,
-  author  = {Cheng, Jun and others},
-  title   = {Retrieval of Brain Tumors by Adaptive Spatial Pooling and Fisher Vector Representation},
-  journal = {PLoS ONE},
-  volume  = {11},
-  number  = {6},
-  year    = {2016}
-}
-```
-
-**Further reading:**
-- [Jun Cheng Brain Tumor Dataset — Figshare](https://figshare.com/articles/dataset/brain_tumor_dataset/1512427)
-- [Deep Residual Learning for Image Recognition — He et al. (2015)](https://arxiv.org/abs/1512.03385)
-- [A survey on deep learning in medical image analysis — Litjens et al. (2017)](https://www.sciencedirect.com/science/article/pii/S1361841517301135)
-- [PyTorch Transfer Learning Tutorial](https://pytorch.org/tutorials/beginner/transfer_learning_tutorial.html)
+- Deep Learning
+- Computer Vision
+- Transfer Learning
+- CNN architectures
+- ResNet50
+- PyTorch
+- Image preprocessing
+- Dataset engineering
+- Patient-level data splitting
+- Model evaluation
+- Classification metrics
+- Confusion matrices
+- Flask deployment
+- Frontend development
+- Git and GitHub
+- GPU-based model training
 
 ---
 
-<div align="center">
+# ⚠️ Medical Disclaimer
 
-Part of the [Machine Learning Projects](https://github.com/shsarv/Machine-Learning-Projects) collection by [Sarvesh Kumar Sharma](https://github.com/shsarv)
+**This project is for educational and research purposes only.**
 
-⭐ Star the main repo if this helped you!
+This application is **not a certified medical diagnostic system** and should not be used to make medical decisions.
 
-</div>
+Predictions generated by this model should not replace:
+
+- Professional medical evaluation
+- Radiologist interpretation
+- Clinical diagnosis
+- Consultation with a qualified healthcare professional
+
+Always consult an appropriate medical professional for real-world medical concerns.
+
+---
+
+# 👨‍💻 Developer
+
+## Nitesh Yadav
+
+GitHub:
+
+**[@vickycodeswith](https://github.com/vickycodeswith)**
+
+Project Repository:
+
+**[Brain-Tumor-Detection](https://github.com/vickycodeswith/Brain-Tumor-Detection)**
+
+---
+
+# ⭐ Acknowledgements
+
+This project uses several open-source technologies and libraries, including:
+
+- PyTorch
+- Torchvision
+- Flask
+- NumPy
+- Pandas
+- Pillow
+- scikit-learn
+- h5py
+
+---
+
+# 📜 License
+
+This project is intended primarily for **educational and research purposes**.
+
+---
+
+## ⭐ Support the Project
+
+If you find this project useful or interesting, consider giving the repository a ⭐ on GitHub.
+
+---
+
+**Built with Python, PyTorch, ResNet50 and Flask. 🧠🚀**
