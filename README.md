@@ -16,7 +16,7 @@ The trained model achieved **94.05% accuracy on the held-out test dataset**.
 
 Brain tumor classification from MRI scans is an important Computer Vision and Deep Learning problem.
 
-This project implements a complete machine learning pipeline from raw `.mat` dataset files to a working Flask web application.
+This project implements a complete machine learning pipeline from raw `.mat` dataset files to a Flask web application and cloud deployment.
 
 ### End-to-End Pipeline
 
@@ -37,11 +37,17 @@ Model Evaluation
         ↓
 Trained Model
         ↓
+Hugging Face Model Hub
+        ↓
 Flask Web Application
+        ↓
+Render Deployment
         ↓
 MRI Image Upload
         ↓
 Tumor Prediction
+        ↓
+Confidence Score
 ```
 
 The project is designed primarily for **educational and research purposes**.
@@ -60,9 +66,12 @@ The project is designed primarily for **educational and research purposes**.
 - 👨‍💻 Flask-based web application
 - 📤 MRI image upload
 - 🤖 AI-powered tumor prediction
+- 📈 Prediction confidence display
 - 📱 Responsive web interface
 - 🔒 Patient-level dataset splitting
 - 🛡️ Large training data excluded from GitHub
+- 🤗 Trained model hosted on Hugging Face
+- 🚀 Render deployment ready
 - 💻 GPU training using Google Colab Tesla T4
 
 ---
@@ -206,6 +215,28 @@ Fine-Tuning
 3-Class Classification
 ```
 
+## Model Architecture
+
+The final classification head uses:
+
+```text
+ResNet50 Backbone
+       ↓
+2048 Features
+       ↓
+Linear Layer
+2048 → 512
+       ↓
+ReLU
+       ↓
+Dropout
+       ↓
+Linear Layer
+512 → 3
+       ↓
+Tumor Class
+```
+
 ### Why Transfer Learning?
 
 Transfer learning allows the model to start with previously learned visual features and adapt them to the brain MRI classification task.
@@ -314,7 +345,7 @@ Epoch 20  → 95.84%
 
 The trained model is integrated into a **Flask web application**.
 
-The application allows a user to upload a brain MRI image and receive a predicted tumor class.
+The application allows a user to upload a brain MRI image and receive a predicted tumor class and confidence score.
 
 ## Application Workflow
 
@@ -329,11 +360,11 @@ Image Preprocessing
  ↓
 ResNet50 Model
  ↓
-Prediction
+Softmax Prediction
  ↓
-Tumor Class
+Tumor Class + Confidence
  ↓
-Confidence
+Prediction Result
 ```
 
 ---
@@ -367,66 +398,170 @@ Displays:
 
 ### ⚠️ Error Page
 
-Handles application errors gracefully.
+Handles invalid uploads and application errors gracefully.
 
 ---
 
-# 📁 Project Structure
+# 🤗 Hugging Face Model Hosting
+
+The trained ResNet50 model is hosted separately from the GitHub source repository.
+
+## Model Repository
+
+**Hugging Face Model:**
+
+https://huggingface.co/Vicky8021/brain-tumor-resnet50
+
+The repository contains:
 
 ```text
-Brain-Tumor-Detection/
-│
-├── Brain-Tumor-Test-Images/
-│   ├── 1.jpg
-│   ├── 2.jpg
-│   ├── 3.jpg
-│   └── ...
-│
-├── models/
-│   └── README.md
-│
-├── src/
-│   ├── preprocess.py
-│   ├── split_dataset.py
-│   └── train.py
-│
-├── static/
-│   └── b.jpg
-│
-├── templates/
-│   ├── Diseasedet.html
-│   ├── MainPage.html
-│   ├── error.html
-│   ├── pred.html
-│   └── uimg.html
-│
-├── app.py
-├── README.md
-├── requirements.txt
-└── .gitignore
+bt_resnet50_model.pt
+```
+
+The trained model is approximately **99 MB**.
+
+### Why Hugging Face?
+
+The trained `.pt` file is intentionally excluded from GitHub to keep the source repository lightweight.
+
+The Flask application uses the `huggingface_hub` library to automatically download the trained model when the application starts.
+
+### Model Loading Flow
+
+```text
+Flask Application Starts
+        ↓
+Hugging Face Hub
+        ↓
+Download bt_resnet50_model.pt
+        ↓
+Load ResNet50 Weights
+        ↓
+Set Model to Evaluation Mode
+        ↓
+Application Ready
 ```
 
 ---
 
-# 🛠️ Technologies Used
+# 🚀 End-to-End Cloud Deployment
 
-| Technology | Purpose |
-|---|---|
-| **Python** | Programming language |
-| **PyTorch** | Deep learning framework |
-| **Torchvision** | Computer vision models and transforms |
-| **ResNet50** | Deep learning architecture |
-| **Flask** | Web application backend |
-| **HTML/CSS** | Frontend |
-| **Pillow** | Image processing |
-| **NumPy** | Numerical computation |
-| **Pandas** | Dataset management |
-| **h5py** | MATLAB `.mat` file processing |
-| **scikit-learn** | Dataset splitting and evaluation |
+The application is designed for cloud deployment using **Render**.
+
+## Deployment Architecture
+
+```text
+                         GitHub
+                           │
+                           │ Source Code
+                           ▼
+                  ┌──────────────────┐
+                  │      Render      │
+                  │   Flask +        │
+                  │    Gunicorn      │
+                  └────────┬─────────┘
+                           │
+                           │ Download Model
+                           ▼
+                  ┌──────────────────┐
+                  │  Hugging Face    │
+                  │    Model Hub     │
+                  └────────┬─────────┘
+                           │
+                           ▼
+                 bt_resnet50_model.pt
+                           │
+                           ▼
+                    ResNet50 Model
+                           │
+                           ▼
+                    MRI Prediction
+                           │
+                           ▼
+                     Live Web App
+```
+
+### GitHub
+
+Contains:
+
+```text
+Source Code
+Flask Application
+Frontend Templates
+Training Scripts
+Requirements
+Documentation
+```
+
+### Hugging Face
+
+Contains:
+
+```text
+Trained ResNet50 Model
+bt_resnet50_model.pt
+```
+
+### Render
+
+Runs:
+
+```text
+Flask Application
+        +
+Gunicorn
+        +
+Downloaded ResNet50 Model
+```
 
 ---
 
-# 💻 Installation
+# ☁️ Render Deployment Configuration
+
+The application can be deployed as a **Render Web Service**.
+
+### Runtime
+
+```text
+Python 3
+```
+
+### Branch
+
+```text
+main
+```
+
+### Root Directory
+
+```text
+Blank
+```
+
+### Build Command
+
+```bash
+pip install -r requirements.txt
+```
+
+### Start Command
+
+```bash
+gunicorn app:app
+```
+
+The application reads the `PORT` environment variable provided by the hosting platform:
+
+```python
+port = int(os.environ.get("PORT", 5000))
+```
+
+This allows the application to run both locally and on a cloud platform.
+
+---
+
+# 💻 Local Installation
 
 ## 1. Clone the Repository
 
@@ -480,13 +615,9 @@ pip install -r requirements.txt
 
 # ▶️ Running the Flask Application
 
-Make sure the trained model is available at:
+The trained model is automatically downloaded from Hugging Face when the application starts.
 
-```text
-models/bt_resnet50_model.pt
-```
-
-Then run:
+Run:
 
 ```bash
 python app.py
@@ -498,7 +629,17 @@ The Flask application will start at:
 http://127.0.0.1:5000
 ```
 
-Open the address in your browser.
+If port 5000 is already occupied, use another port:
+
+```bash
+PORT=5001 python app.py
+```
+
+Then open:
+
+```text
+http://127.0.0.1:5001
+```
 
 ---
 
@@ -513,8 +654,6 @@ python src/preprocess.py
 ```
 
 This converts the original `.mat` files into processed MRI images.
-
----
 
 ## Step 2 — Create Patient-Level Splits
 
@@ -532,8 +671,6 @@ test.csv
 
 with patient-level separation.
 
----
-
 ## Step 3 — Train the Model
 
 ```bash
@@ -541,6 +678,64 @@ python src/train.py
 ```
 
 The training process uses ResNet50 transfer learning.
+
+---
+
+# 📁 Project Structure
+
+```text
+Brain-Tumor-Detection/
+│
+├── Brain-Tumor-Test-Images/
+│   ├── 1.jpg
+│   ├── 2.jpg
+│   ├── 3.jpg
+│   └── ...
+│
+├── models/
+│   └── README.md
+│
+├── src/
+│   ├── preprocess.py
+│   ├── split_dataset.py
+│   └── train.py
+│
+├── static/
+│   └── b.jpg
+│
+├── templates/
+│   ├── Diseasedet.html
+│   ├── MainPage.html
+│   ├── error.html
+│   ├── pred.html
+│   └── uimg.html
+│
+├── app.py
+├── README.md
+├── requirements.txt
+└── .gitignore
+```
+
+---
+
+# 🛠️ Technologies Used
+
+| Technology | Purpose |
+|---|---|
+| **Python** | Programming language |
+| **PyTorch** | Deep learning framework |
+| **Torchvision** | Computer vision models and transforms |
+| **ResNet50** | Deep learning architecture |
+| **Flask** | Web application backend |
+| **Gunicorn** | Production WSGI server |
+| **Hugging Face Hub** | Trained model hosting |
+| **Render** | Cloud deployment |
+| **HTML/CSS** | Frontend |
+| **Pillow** | Image processing |
+| **NumPy** | Numerical computation |
+| **Pandas** | Dataset management |
+| **h5py** | MATLAB `.mat` file processing |
+| **scikit-learn** | Dataset splitting and evaluation |
 
 ---
 
@@ -561,17 +756,23 @@ models/bt_resnet50_model.pt
 
 These files are excluded using `.gitignore`.
 
-### Why?
+### Repository Design
 
-The purpose is to keep the GitHub repository lightweight and focused on:
+```text
+GitHub
+│
+├── Source Code
+├── Flask Application
+├── Training Scripts
+├── Frontend
+└── Documentation
 
-- Source code
-- Model training pipeline
-- Flask application
-- Frontend
-- Documentation
+Hugging Face
+│
+└── Trained ResNet50 Model
+```
 
-The complete training dataset and trained model are therefore maintained separately.
+This keeps the GitHub repository lightweight while allowing the deployed application to access the trained model.
 
 ---
 
@@ -586,6 +787,8 @@ Large generated and training files are excluded to:
 - Prevent accidental dataset uploads
 - Separate training artifacts from source code
 - Make the project easier to clone and review
+
+The trained model is maintained separately on Hugging Face.
 
 ---
 
@@ -614,7 +817,15 @@ The overall machine learning workflow is:
         ↓
 10. Test Evaluation
         ↓
-11. Flask Deployment
+11. Trained Model
+        ↓
+12. Hugging Face Model Hosting
+        ↓
+13. Flask Integration
+        ↓
+14. Render Deployment
+        ↓
+15. Live MRI Prediction
 ```
 
 ---
@@ -655,9 +866,12 @@ This project demonstrates practical experience with:
 - Model evaluation
 - Classification metrics
 - Confusion matrices
-- Flask deployment
+- Flask development
+- Cloud deployment
+- Model hosting
 - Frontend development
 - Git and GitHub
+- Hugging Face Model Hub
 - GPU-based model training
 
 ---
@@ -685,11 +899,15 @@ Always consult an appropriate medical professional for real-world medical concer
 
 GitHub:
 
-**[@vickycodeswith](https://github.com/vickycodeswith)**
+https://github.com/vickycodeswith
 
 Project Repository:
 
-**[Brain-Tumor-Detection](https://github.com/vickycodeswith/Brain-Tumor-Detection)**
+https://github.com/vickycodeswith/Brain-Tumor-Detection
+
+Model Repository:
+
+https://huggingface.co/Vicky8021/brain-tumor-resnet50
 
 ---
 
@@ -700,6 +918,8 @@ This project uses several open-source technologies and libraries, including:
 - PyTorch
 - Torchvision
 - Flask
+- Gunicorn
+- Hugging Face Hub
 - NumPy
 - Pandas
 - Pillow
@@ -720,4 +940,4 @@ If you find this project useful or interesting, consider giving the repository a
 
 ---
 
-**Built with Python, PyTorch, ResNet50 and Flask. 🧠🚀**
+**Built with Python, PyTorch, ResNet50, Hugging Face and Flask. 🧠🚀**
