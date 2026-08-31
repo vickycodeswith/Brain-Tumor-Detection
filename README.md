@@ -4,6 +4,8 @@ An end-to-end **Brain Tumor Classification System** built using **Deep Learning,
 
 The application analyzes brain MRI images and classifies them into three tumor categories:
 
+[![Live Demo](https://img.shields.io/badge/Live%20Demo-Hugging%20Face-yellow?style=for-the-badge&logo=huggingface)](https://huggingface.co/spaces/Vicky8021/Brain-Tumor-Detection)
+
 - 🔬 **Glioma**
 - 🔬 **Meningioma**
 - 🔬 **Pituitary Tumor**
